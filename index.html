@@ -1,0 +1,520 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <!-- // STEP 1: SEO - Character set and viewport are essential for correct rendering on all devices. -->
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <!-- // STEP 1: SEO - Core meta tags for search engine indexing and branding. -->
+    <title>Mathimation (a Generative Mathematical Animation App)</title>
+    <meta name="description" content="Explore Mathimation, a mesmerizing generative art application that creates unique, complex mathematical animations in real-time. Control the patterns, or let new ones emerge endlessly. Created by Chris Pirillo.">
+    <meta name="keywords" content="generative art, mathematical animation, p5.js, creative coding, interactive art, procedural generation, math art, Chris Pirillo, Mathimation">
+    <meta name="author" content="Chris Pirillo">
+
+    <!-- // STEP 1: SEO - Canonical URL to prevent duplicate content issues. -->
+    <link rel="canonical" href="https://pirillo.com/arcade/mathimation.html">
+
+    <!-- // STEP 1: SEO - Open Graph metadata for rich sharing previews on platforms like Facebook and LinkedIn. -->
+    <meta property="og:title" content="Mathimation (a Generative Mathematical Animation App)">
+    <meta property="og:description" content="Explore Mathimation, a mesmerizing generative art application that creates unique, complex mathematical animations in real-time.">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://pirillo.com/arcade/mathimation.html">
+    <meta property="og:image" content="https://pirillo.com/arcade/images/mathimation.png">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+
+    <!-- // STEP 1: SEO - Twitter Card metadata for rich sharing previews on Twitter. -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:site" content="@ChrisPirillo">
+    <meta name="twitter:creator" content="@ChrisPirillo">
+    <meta name="twitter:title" content="Mathimation (a Generative Mathematical Animation App)">
+    <meta name="twitter:description" content="A mesmerizing generative art app creating unique mathematical animations in real-time.">
+    <meta name="twitter:image" content="https://pirillo.com/arcade/images/mathimation.png">
+
+    <!-- // STEP 2 & 3: Performance & Core Web Vitals - Resource hints to speed up loading of critical third-party assets. -->
+    <!-- // Pre-connect to the domains serving fonts and scripts to establish an early connection. -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="preconnect" href="https://cdnjs.cloudflare.com">
+    
+    <!-- // Preload the critical p5.js library as it's required for the application to start. -->
+    <link rel="preload" as="script" href="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/p5.min.js">
+
+    <!-- // Preload the font stylesheet. The 'display=swap' parameter ensures text remains visible during font loading, improving LCP and preventing FOIT. -->
+    <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Roboto+Mono&display=swap">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Roboto+Mono&display=swap">
+
+    <!-- // This script is render-blocking but required for the main application logic to function. Per instructions, it is not deferred. -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/p5.min.js"></script>
+
+    <!-- // STEP 4: Technical Enhancements - Google Analytics script loaded asynchronously to avoid blocking page render. -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-1CQ4D3VQ3L"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-1CQ4D3VQ3L');
+    </script>
+
+    <!-- // STEP 1: SEO - JSON-LD Structured Data for rich search results. Describes the page as a Software Application. -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "SoftwareApplication",
+      "name": "Mathimation",
+      "applicationCategory": "DesignApplication",
+      "operatingSystem": "WEB",
+      "description": "An interactive web application that generates unique, complex mathematical animations in real-time using procedural algorithms.",
+      "author": {
+        "@type": "Person",
+        "name": "Chris Pirillo",
+        "url": "https://chris.pirillo.com/"
+      },
+      "offers": {
+        "@type": "Offer",
+        "price": "0"
+      }
+    }
+    </script>
+    
+    <style>
+        /* CSS has been inlined, which is a performance best practice to eliminate render-blocking stylesheet requests. No changes made. */
+        body {
+            margin: 0;
+            font-family: 'Inter', sans-serif;
+            background: #000;
+            color: white;
+            overflow: hidden; 
+        }
+        
+        #canvas-wrapper {
+            position: fixed;
+            top: 0;
+            left: 0;
+            z-index: 1;
+        }
+        
+        #settings-toggle {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1001;
+            background: rgba(15, 15, 15, 0.5);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            cursor: pointer;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            transition: background 0.3s ease, transform 0.4s ease;
+            backdrop-filter: blur(5px);
+        }
+
+        #settings-toggle:hover {
+            background: rgba(40, 40, 40, 0.8);
+            transform: rotate(45deg);
+        }
+
+        #settings-toggle svg {
+            width: 26px;
+            height: 26px;
+            fill: #fff;
+            transition: fill 0.3s ease;
+        }
+        #settings-toggle:hover svg {
+            fill: #00e5ff;
+        }
+        
+        .controls {
+            position: fixed;
+            top: 0;
+            right: -344px;
+            width: 300px;
+            height: 100%;
+            background: rgba(10, 10, 15, 0.7);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            padding: 20px;
+            z-index: 1000;
+            transition: right 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+            overflow-y: auto;
+            box-sizing: border-box;
+            border-left: 1px solid;
+            border-image-slice: 1;
+            border-image-source: linear-gradient(to bottom, rgba(255, 255, 255, 0.05), #00e5ff, rgba(255, 255, 255, 0.05));
+        }
+
+        .controls.active {
+            right: 0;
+        }
+        
+        .control-group {
+            margin-bottom: 22px;
+        }
+        
+        .control-group label {
+            display: block;
+            margin-bottom: 12px;
+            font-weight: 600;
+            font-size: 14px;
+            color: #ddd;
+        }
+        
+        input[type="range"] {
+            -webkit-appearance: none;
+            width: 100%;
+            height: 4px;
+            border-radius: 2px;
+            background: rgba(0, 0, 0, 0.4);
+            outline: none;
+            cursor: pointer;
+        }
+        
+        input[type="range"]::-webkit-slider-runnable-track {
+            width: 100%;
+            height: 4px;
+            cursor: pointer;
+            background: linear-gradient(to right, #00e5ff 0%, #00e5ff var(--thumb-percent, 0%), rgba(255,255,255,0.1) var(--thumb-percent, 0%), rgba(255,255,255,0.1) 100%);
+            border-radius: 2px;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            height: 18px;
+            width: 18px;
+            border-radius: 50%;
+            background: #ffffff;
+            border: 2px solid #00e5ff;
+            cursor: pointer;
+            margin-top: -7px; 
+            box-shadow: 0 0 10px #00e5ff, 0 0 5px #00e5ff;
+        }
+
+        input[type="range"]::-moz-range-track {
+            width: 100%;
+            height: 4px;
+            cursor: pointer;
+            background: rgba(255,255,255,0.1);
+            border-radius: 2px;
+        }
+        input[type="range"]::-moz-range-progress {
+            background-color: #00e5ff;
+            height: 4px;
+            border-radius: 2px;
+        }
+        input[type="range"]::-moz-range-thumb {
+            height: 14px;
+            width: 14px;
+            border-radius: 50%;
+            background: #ffffff;
+            border: 2px solid #00e5ff;
+            cursor: pointer;
+            box-shadow: 0 0 10px #00e5ff, 0 0 5px #00e5ff;
+        }
+        
+        .value-display {
+            color: #00e5ff;
+            font-weight: 400;
+            float: right;
+            font-size: 14px;
+            font-family: 'Roboto Mono', monospace;
+        }
+        
+        .action-buttons {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        button {
+            width: 100%;
+            padding: 12px 5px;
+            border: 1px solid #00e5ff;
+            border-radius: 6px;
+            background: transparent;
+            color: #00e5ff;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s, color 0.2s, box-shadow 0.2s, transform 0.1s;
+            font-family: 'Inter', sans-serif;
+            font-size: 13px; 
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        button:hover {
+            background: #00e5ff;
+            color: #000;
+            box-shadow: 0 0 15px #00e5ff;
+        }
+        
+        button:active {
+            transform: scale(0.98);
+        }
+        
+        .preset-buttons {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+        
+        .preset-buttons button {
+            border-color: #557;
+            color: #99c;
+        }
+
+        .preset-buttons button:hover {
+            background: #557;
+            color: #fff;
+            box-shadow: 0 0 15px #557;
+        }
+
+        h3 {
+            margin-top: 10px;
+            margin-bottom: 25px;
+            font-weight: 700;
+            color: #fff;
+            text-align: center;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            text-shadow: 0 0 5px #fff, 0 0 10px #00e5ff;
+        }
+    </style>
+</head>
+<body>
+    <!-- // STEP 1: SEO - Using <main> for the primary content of the page. -->
+    <main>
+        <!-- // The canvas wrapper is the main visual component of the application. -->
+        <div id="canvas-wrapper"></div>
+    </main>
+    
+    <!-- // STEP 1: SEO - Using <button> for the interactive settings toggle. -->
+    <button id="settings-toggle" aria-label="Toggle Settings Panel">
+        <!-- // The SVG icon is decorative, so an aria-label on the button is sufficient for accessibility. A <title> is added for extra context. -->
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" role="img" aria-hidden="true">
+            <title>Settings</title>
+            <path d="M19.43,12.98c0.04-0.32,0.07-0.64,0.07-0.98s-0.03-0.66-0.07-0.98l2.11-1.65c0.19-0.15,0.24-0.42,0.12-0.64l-2-3.46c-0.12-0.22-0.39-0.3-0.61-0.22l-2.49,1c-0.52-0.4-1.08-0.73-1.69-0.98l-0.38-2.65C14.46,2.18,14.25,2,14,2h-4c-0.25,0-0.46,0.18-0.49,0.42L9.13,5.07c-0.6,0.25-1.17,0.59-1.69,0.98l-2.49-1c-0.23-0.09-0.49,0-0.61,0.22l-2,3.46c-0.13,0.22-0.07,0.49,0.12,0.64l2.11,1.65c-0.04,0.32-0.07,0.65-0.07,0.98s0.03,0.66,0.07,0.98l-2.11,1.65c-0.19,0.15-0.24,0.42-0.12,0.64l2,3.46c0.12,0.22,0.39,0.3,0.61,0.22l2.49-1c0.52,0.4,1.08,0.73,1.69,0.98l0.38,2.65C9.54,21.82,9.75,22,10,22h4c0.25,0,0.46-0.18,0.49-0.42l0.38-2.65c0.6-0.25,1.17-0.59,1.69-0.98l2.49,1c0.23,0.09,0.49,0,0.61,0.22l2-3.46c0.12-0.22,0.07,0.49-0.12-0.64L19.43,12.98z M12,15.5c-1.93,0-3.5-1.57-3.5-3.5s1.57-3.5,3.5-3.5s3.5,1.57,3.5,3.5S13.93,15.5,12,15.5z"/>
+        </svg>
+    </button>
+
+    <!-- // STEP 1: SEO - Using <aside> for complementary content (the control panel). -->
+    <aside class="controls">
+        <!-- // Using <h1> here as it's the main heading for this self-contained application interface. -->
+        <h1>Mathimation</h1>
+        
+        <!-- // A <section> for each logical grouping of controls. -->
+        <section class="control-group">
+            <label for="speed">Speed <span class="value-display" id="speed-val"></span></label>
+            <input type="range" id="speed" min="0.1" max="3" step="0.1">
+        </section>
+        
+        <section class="control-group">
+            <label for="amplitude">Amplitude <span class="value-display" id="amp-val"></span></label>
+            <input type="range" id="amplitude" min="0.5" max="8" step="0.1">
+        </section>
+        
+        <section class="control-group">
+            <label for="frequency">Frequency <span class="value-display" id="freq-val"></span></label>
+            <input type="range" id="frequency" min="10" max="50" step="1">
+        </section>
+        
+        <section class="control-group">
+            <label for="complexity">Complexity <span class="value-display" id="complex-val"></span></label>
+            <input type="range" id="complexity" min="3" max="20" step="0.5">
+        </section>
+        
+        <section class="control-group">
+            <label for="scale">Scale <span class="value-display" id="scale-val"></span></label>
+            <input type="range" id="scale" min="10" max="60" step="2">
+        </section>
+        
+        <section class="control-group">
+            <label for="particles">Particles <span class="value-display" id="particles-val"></span></label>
+            <input type="range" id="particles" min="1000" max="20000" step="500">
+        </section>
+        
+        <section class="control-group">
+            <label for="alpha">Stroke Alpha <span class="value-display" id="alpha-val"></span></label>
+            <input type="range" id="alpha" min="20" max="255" step="5">
+        </section>
+        
+        <!-- // Using <nav> as this is a primary navigation block for the application's controls. -->
+        <nav class="action-buttons" aria-label="Main Controls">
+            <button id="toggle-animation-btn" onclick="toggleAnimation()">Pause</button>
+            <button onclick="saveFrame()">Export</button>
+            <button onclick="generateNewPattern()">New</button>
+        </nav>
+        
+        <!-- // A separate section for the preset navigation. -->
+        <section>
+            <h2>PRESETS</h2>
+            <nav class="preset-buttons" aria-label="Preset Controls">
+                <button onclick="loadPreset('waves')">Waves</button>
+                <button onclick="loadPreset('spiral')">Spiral</button>
+                <button onclick="loadPreset('chaos')">Chaos</button>
+                <button onclick="loadPreset('gentle')">Gentle</button>
+            </nav>
+        </section>
+    </aside>
+
+    <script>
+        // --- JAVASCRIPT ---
+        // Per your explicit instructions, this entire script block remains UNCHANGED to ensure
+        // production stability and avoid breaking any application logic or dependencies.
+        // All optimizations have been made in the surrounding HTML and head without altering this code.
+
+        let config = {}; 
+        let t = 0; 
+        let animationRunning = true;
+        
+        let dynamicFormula;
+
+        function setup() {
+            createCanvas(windowWidth, windowHeight).parent('canvas-wrapper');
+            
+            config = {
+                speed: 1.0, amplitude: 3.0, frequency: 29.0,
+                complexity: 9.0, scale: 30.0, particles: 10000, alpha: 96
+            };
+            
+            generateNewPattern(); 
+            setupUI();
+        }
+
+        function draw() {
+            if (!animationRunning) return;
+            
+            background(0);
+            stroke(255, config.alpha);
+            strokeWeight(1);
+            
+            push();
+            translate(width / 2, height / 2);
+            scale(1.75);
+            translate(-200, -200); 
+            
+            t += PI / 240 * config.speed;
+            
+            if (dynamicFormula) {
+                 for (let i = 0; i < config.particles; i++) {
+                    dynamicFormula(i, i / 235);
+                }
+            }
+            pop();
+        }
+        
+        function windowResized() {
+            resizeCanvas(windowWidth, windowHeight);
+        }
+
+        function generateNewPattern() {
+            dynamicFormula = createDynamicFormula();
+            t = 0; 
+            
+            if (!animationRunning && p5.instance) {
+                redraw(); 
+            }
+        }
+
+        function createDynamicFormula() {
+            const trigFunctions = ['sin', 'cos', 'tan'];
+            const operations = ['+', '-', '*'];
+            const inputVars = ['k', 'd', 'c', 'e', 'y', 't'];
+
+            const numTerms = floor(random(2, 5));
+            let formulaParts = [];
+
+            for (let i = 0; i < numTerms; i++) {
+                const func = random(trigFunctions);
+                const inputVar = random(inputVars);
+                const multiplier = random(0.5, 5).toFixed(2);
+                const innerMultiplier = random(0.5, 10).toFixed(2);
+                const termString = `${multiplier} * ${func}(${inputVar} * ${innerMultiplier})`;
+                formulaParts.push(termString);
+            }
+            
+            const qFormulaString = formulaParts.join(` ${random(operations)} `);
+            
+            return (x, y) => {
+                let k = (4 + sin(y * 2 - t) * config.amplitude) * cos(x / config.frequency);
+                let e = y / 8 - 13;
+                let d = sqrt(k * k + e * e);
+                let c = d - t;
+                let q = eval(qFormulaString);
+
+                let px = q + config.scale * cos(c) + 200;
+                let py = q * sin(c) + d * 39 - 220;
+                
+                point(px, py);
+            };
+        }
+        
+        function updateControls() {
+            Object.keys(config).forEach(id => {
+                const slider = document.getElementById(id);
+                if (slider) {
+                    slider.value = config[id];
+                    const display = document.getElementById(`${id}-val`);
+                    if(display) {
+                        const value = config[id];
+                        display.textContent = Number.isInteger(value) ? value : value.toFixed(1);
+                    }
+                    const min = slider.min;
+                    const max = slider.max;
+                    const percent = ((slider.value - min) / (max - min)) * 100;
+                    slider.style.setProperty('--thumb-percent', `${percent}%`);
+                }
+            });
+        }
+        
+        function setupUI() {
+            updateControls(); 
+
+            document.querySelectorAll('.control-group input[type="range"]').forEach(slider => {
+                slider.addEventListener('input', (e) => {
+                    config[e.target.id] = parseFloat(e.target.value);
+                    updateControls();
+                });
+            });
+
+            document.getElementById('settings-toggle').addEventListener('click', () => {
+                document.querySelector('.controls').classList.toggle('active');
+            });
+        }
+        
+        function toggleAnimation() {
+            animationRunning = !animationRunning;
+            const toggleButton = document.getElementById('toggle-animation-btn');
+            if (animationRunning) {
+                loop();
+                toggleButton.textContent = 'Pause';
+            } else {
+                noLoop();
+                toggleButton.textContent = 'Play';
+            }
+        }
+        
+        function saveFrame() {
+            saveCanvas('generative-animation', 'png');
+        }
+        
+        function loadPreset(preset) {
+            const presets = {
+                waves: { speed: 0.8, amplitude: 5, frequency: 25, complexity: 12, scale: 35, particles: 8000, alpha: 80 },
+                spiral: { speed: 1.5, amplitude: 2, frequency: 40, complexity: 6, scale: 25, particles: 15000, alpha: 120 },
+                chaos: { speed: 2.2, amplitude: 7, frequency: 15, complexity: 18, scale: 45, particles: 12000, alpha: 60 },
+                gentle: { speed: 0.5, amplitude: 1.5, frequency: 35, complexity: 4, scale: 20, particles: 6000, alpha: 150 }
+            };
+            
+            if (presets[preset]) {
+                config = { ...presets[preset] };
+                updateControls();
+                if (!animationRunning) redraw();
+            }
+        }
+    </script>
+</body>
+</html>

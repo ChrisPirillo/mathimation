@@ -7,4 +7,6 @@ Explore Mathimation, a mesmerizing generative art application that creates uniqu
 
 ![Screenshot](https://github.com/ChrisPirillo/mathimation/blob/main/assets/screenshot.png?raw=true)
 
+![Screenshot](https://raw.githubusercontent.com/ChrisPirillo/mathimation/main/assets/screenshot.png)
+
 * Try it now: [https://pirillo.com/arcade/mathimation.html](https://pirillo.com/arcade/mathimation.html)
